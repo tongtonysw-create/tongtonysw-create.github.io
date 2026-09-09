@@ -1,0 +1,47 @@
+name: Build & Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [source]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: source
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install & build
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+
+      - name: Enable GitHub Pages (branch main)
+        run: |
+          TOKEN=$(git config --local --get http.https://github.com/.extraheader | sed 's/AUTHORIZATION: basic //i' | base64 -d | cut -d: -f2-)
+          curl -s -X POST \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/tongtonysw-create/tongtonysw-create.github.io/pages" \
+            -d '{"source":{"branch":"main","path":"/"}}' || true
+
+      - name: Push built site to main branch
+        run: |
+          git config user.name "beadoria-bot"
+          git config user.email "beadoria-bot@users.noreply.github.com"
+          git checkout --orphan site
+          git rm -rf . 2>/dev/null || true
+          cp -r dist/. .
+          git add -A
+          git commit -m "deploy"
+          git push origin site:main --force
