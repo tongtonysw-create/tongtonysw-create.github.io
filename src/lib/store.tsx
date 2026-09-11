@@ -8,7 +8,7 @@ import {
   defaultEmailSettings, defaultNotify, HKD_TO_CNY, FREE_SHIPPING_HKD,
 } from './seed'
 import { cloudEnabled, fetchCloudDB, pushCloudDB, insertCloudOrder, fetchCloudOrders } from './cloud'
-import { sendWhatsAppNotify } from './whatsapp'
+import { sendWhatsAppNotify, sendTelegramNotify } from './whatsapp'
 
 // 只同步公開內容上雲；訂單/電郵設定屬敏感資料，經獨立表格同密碼 RPC 處理
 // （notify 包含 WhatsApp 通知設定，要同步先至令任何裝置嘅客人都觸發到通知）
@@ -265,6 +265,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       }))
       insertCloudOrder(order) // 即時寫入雲端訂單表（防火牆式，失敗唔影響本地）
       sendWhatsAppNotify(db.notify, order) // WhatsApp 即時通知店主（未設 APIKEY 就靜靜略過）
+      sendTelegramNotify(db.notify, order) // Telegram 即時通知店主（未設 Token 就靜靜略過）
       return order
     },
     updateOrderStatus: (id, s) =>

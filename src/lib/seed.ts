@@ -261,4 +261,7 @@ export const defaultNotify: NotifySettings = {
   waPhone: '85292128542',
   waApiKey: '',
   enabled: true,
+  tgToken: '',
+  tgChatId: '',
+  tgEnabled: true,
 }

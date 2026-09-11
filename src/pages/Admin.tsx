@@ -2,13 +2,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   Lock, Package, Image as ImageIcon, Type, MessageSquareText, ClipboardList,
-  Mail, Plus, Trash2, Save, Languages, ArrowLeft, RefreshCcw, Pencil, KeyRound, MessageCircle,
+  Mail, Plus, Trash2, Save, Languages, ArrowLeft, RefreshCcw, Pencil, KeyRound, MessageCircle, Send,
 } from 'lucide-react'
 import { useStore, fmtPrice, t, uid } from '@/lib/store'
 import { translateZhToEn, translateEnToZh } from '@/lib/translate'
 import { sendShippingEmail } from '@/lib/email'
 import { adminLogin, changeAdminPassword, setAdminPassword, updateCloudOrderStatus } from '@/lib/cloud'
-import { sendWhatsAppTest } from '@/lib/whatsapp'
+import { sendWhatsAppTest, sendTelegramTest } from '@/lib/whatsapp'
 import type { Bilingual, Order, OrderStatus, Product, QA } from '@/lib/types'
 
 // ── 通用小組件 ─────────────────────────────────────────────
@@ -426,6 +426,7 @@ function EmailTab() {
   const [s, setS] = useState(db.emailSettings)
   const [n, setN] = useState(db.notify)
   const [waMsg, setWaMsg] = useState('')
+  const [tgMsg, setTgMsg] = useState('')
   return (
     <div className="max-w-2xl space-y-6">
       <div className="soft-card rounded-2xl p-5 space-y-4">
@@ -468,6 +469,49 @@ function EmailTab() {
           </button>
         </div>
         {waMsg && <p className="text-sm font-body text-[#8a6d78]">{waMsg}</p>}
+      </div>
+
+      <div className="soft-card rounded-2xl p-5 space-y-4">
+        <h3 className="font-display text-lg font-semibold text-[#5a4550] flex items-center gap-2">
+          <Send size={18} className="text-[#4a8fb5]" /> Telegram 新訂單通知（推薦 · 穩定免費）
+        </h3>
+        <div className="bg-[#e8f2fa] border border-[#c3dcee] rounded-xl p-3 text-xs font-body text-[#3d5a6b] leading-relaxed">
+          設定三步：① Telegram 搵 <b>@BotFather</b> → 發送 <code>/newbot</code> → 跟指示改名 → 得到 <b>Token</b>；
+          ② 開你新開嘅 Bot 撳 <b>Start</b> 發一句任何說話；③ Telegram 搵 <b>@userinfobot</b> → 發送任何訊息 → 得到你嘅 <b>Chat ID</b>（純數字）。
+          將兩樣填入下面儲存就得。
+        </div>
+        <div className="grid md:grid-cols-2 gap-3">
+          <Field label="Telegram Bot Token">
+            <input className={inputCls} value={n.tgToken} onChange={(e) => setN({ ...n, tgToken: e.target.value })} placeholder="123456:ABC-DEF..." />
+          </Field>
+          <Field label="你嘅 Telegram Chat ID">
+            <input className={inputCls} value={n.tgChatId} onChange={(e) => setN({ ...n, tgChatId: e.target.value })} placeholder="例：123456789" />
+          </Field>
+        </div>
+        <label className="flex items-center gap-2 text-sm font-body text-[#8a6d78]">
+          <input type="checkbox" checked={n.tgEnabled} onChange={(e) => setN({ ...n, tgEnabled: e.target.checked })} />
+          啟用落單自動 Telegram 通知
+        </label>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => { saveNotify(n); setTgMsg('✅ 已儲存（即時全網生效）') }}
+            className="flex items-center gap-1.5 px-6 py-2.5 rounded-full rose-gradient text-white text-sm font-body"
+          >
+            <Save size={15} /> 儲存設定
+          </button>
+          <button
+            onClick={async () => {
+              setTgMsg('發送中…')
+              const ok = await sendTelegramTest(n)
+              setTgMsg(ok ? '📲 測試訊息已發出，睇下你 Telegram 收唔收到' : '❌ 發送失敗：請檢查 Token 同 Chat ID（記住先同 Bot 講過嘢）')
+            }}
+            disabled={!n.tgToken || !n.tgChatId}
+            className="px-6 py-2.5 rounded-full border border-[#4a8fb5]/50 text-[#4a8fb5] text-sm font-body disabled:opacity-40 hover:bg-[#4a8fb5]/10"
+          >
+            發送測試訊息
+          </button>
+        </div>
+        {tgMsg && <p className="text-sm font-body text-[#8a6d78]">{tgMsg}</p>}
       </div>
 
       <div className="soft-card rounded-2xl p-5 space-y-4">

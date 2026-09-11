@@ -95,6 +95,9 @@ export interface NotifySettings {
   waPhone: string    // 店主 WhatsApp（連區碼，唔使 +，例：85292128542）
   waApiKey: string   // CallMeBot APIKEY（啟動後由機械人發送）
   enabled: boolean   // 落單時自動 WhatsApp 通知店主
+  tgToken: string    // Telegram Bot Token（向 @BotFather 取得）
+  tgChatId: string   // 店主 Telegram Chat ID
+  tgEnabled: boolean // 落單時自動 Telegram 通知店主
 }
 
 export interface EmailLog {

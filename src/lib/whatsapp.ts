@@ -59,3 +59,40 @@ export function waMeOrderLink(n: NotifySettings, o: Order): string {
   const phone = n.waPhone.replace(/[^0-9]/g, '')
   return `https://wa.me/${phone}?text=${encodeURIComponent(orderMessage(o))}`
 }
+
+// ── Telegram 通知：店主自己開 Bot，穩定免費，無「爆滿」問題 ──
+
+/** 落單後自動 Telegram 通知店主 */
+export async function sendTelegramNotify(n: NotifySettings, o: Order): Promise<boolean> {
+  if (!n.tgEnabled || !n.tgToken || !n.tgChatId) return false
+  try {
+    const r = await fetch(`https://api.telegram.org/bot${n.tgToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: n.tgChatId, text: orderMessage(o) }),
+    })
+    if (!r.ok) console.warn('[telegram] notify failed:', r.status)
+    return r.ok
+  } catch (e) {
+    console.warn('[telegram] notify error:', e)
+    return false
+  }
+}
+
+/** 後台測試用：發一則 Telegram 測試訊息確認設定正確 */
+export async function sendTelegramTest(n: NotifySettings): Promise<boolean> {
+  if (!n.tgToken || !n.tgChatId) return false
+  try {
+    const r = await fetch(`https://api.telegram.org/bot${n.tgToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: n.tgChatId,
+        text: `🌸 Beadoria 測試訊息：Telegram 新訂單通知已接通！（${new Date().toLocaleString('zh-HK')}）`,
+      }),
+    })
+    return r.ok
+  } catch {
+    return false
+  }
+}
