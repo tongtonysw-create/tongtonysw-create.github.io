@@ -1,5 +1,5 @@
 // ── Admin 後台：產品 / 網站圖片 / 網站文字 / 客服問答 / 訂單 / 電郵 ──
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Lock, Package, Image as ImageIcon, Type, MessageSquareText, ClipboardList,
   Mail, Plus, Trash2, Save, Languages, ArrowLeft, RefreshCcw, Pencil,
@@ -7,6 +7,7 @@ import {
 import { useStore, fmtPrice, t, uid } from '@/lib/store'
 import { translateZhToEn, translateEnToZh } from '@/lib/translate'
 import { sendShippingEmail } from '@/lib/email'
+import { setAdminPassword, updateCloudOrderStatus } from '@/lib/cloud'
 import type { Bilingual, Order, OrderStatus, Product, QA } from '@/lib/types'
 
 // ── 通用小組件 ─────────────────────────────────────────────
@@ -345,6 +346,7 @@ function OrdersTab() {
 
   const changeStatus = async (o: Order, s: OrderStatus) => {
     updateOrderStatus(o.id, s)
+    updateCloudOrderStatus(o.id, s) // 同步上雲端，客人 AI 查單會見到新狀態
     if (s === 'shipped') {
       await sendShippingEmail(db.emailSettings, logEmail, { ...o, status: s })
     }
@@ -497,11 +499,31 @@ const TABS = [
 ] as const
 
 export default function Admin() {
-  const { db, resetDemo } = useStore()
+  const { db, resetDemo, refreshOrders } = useStore()
   const [authed, setAuthed] = useState(() => sessionStorage.getItem('beadoria-admin') === '1')
   const [pw, setPw] = useState('')
   const [tab, setTab] = useState<(typeof TABS)[number]['key']>('products')
   const pendingCount = useMemo(() => db.orders.filter((o) => o.status === 'pending' || o.status === 'paid').length, [db.orders])
+
+  // 登入後拉取雲端訂單（其他裝置客人落嘅單都會見到）
+  useEffect(() => {
+    if (!authed) return
+    const saved = sessionStorage.getItem('beadoria-admin-pw') || ''
+    if (saved) setAdminPassword(saved)
+    refreshOrders()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authed])
+
+  const doLogin = () => {
+    if (pw === 'admin123') {
+      sessionStorage.setItem('beadoria-admin', '1')
+      sessionStorage.setItem('beadoria-admin-pw', pw)
+      setAdminPassword(pw)
+      setAuthed(true)
+    } else {
+      alert('密碼錯誤（示範密碼：admin123）')
+    }
+  }
 
   if (!authed) {
     return (
@@ -519,21 +541,11 @@ export default function Admin() {
             value={pw}
             onChange={(e) => setPw(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && pw === 'admin123') {
-                sessionStorage.setItem('beadoria-admin', '1')
-                setAuthed(true)
-              }
+              if (e.key === 'Enter') doLogin()
             }}
           />
           <button
-            onClick={() => {
-              if (pw === 'admin123') {
-                sessionStorage.setItem('beadoria-admin', '1')
-                setAuthed(true)
-              } else {
-                alert('密碼錯誤（示範密碼：admin123）')
-              }
-            }}
+            onClick={doLogin}
             className="w-full rose-gradient text-white font-body py-2.5 rounded-full"
           >
             登入

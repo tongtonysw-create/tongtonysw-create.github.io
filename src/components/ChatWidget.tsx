@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { MessageCircleHeart, X, Send, Bot } from 'lucide-react'
 import { useStore, t } from '@/lib/store'
 import { getChatReply } from '@/lib/chat'
+import { trackCloudOrder } from '@/lib/cloud'
 
 interface Msg {
   from: 'user' | 'bot'
@@ -33,10 +34,19 @@ export default function ChatWidget() {
     setInput('')
     setMsgs((m) => [...m, { from: 'user', text }])
     setTyping(true)
-    // 模擬思考延遲，體感更像 AI
-    setTimeout(() => {
-      const reply = getChatReply(text, { products: db.products, qas: db.qas, orders: db.orders, currency })
-      setMsgs((m) => [...m, { from: 'bot', text: reply.text, suggestions: reply.suggestions }])
+    // 模擬思考延遲，體感更像 AI；查單時會同時去雲端訂單庫撈（本機淨係自己落嘅單）
+    setTimeout(async () => {
+      let orders = db.orders
+      const m = text.match(/BD-?\s*(\d{4,6})/i)
+      if (m) {
+        const id = `BD-${m[1]}`
+        if (!orders.some((o) => o.id === id)) {
+          const remote = await trackCloudOrder<typeof db.orders[number]>(id)
+          if (remote) orders = [remote, ...orders]
+        }
+      }
+      const reply = getChatReply(text, { products: db.products, qas: db.qas, orders, currency })
+      setMsgs((m2) => [...m2, { from: 'bot', text: reply.text, suggestions: reply.suggestions }])
       setTyping(false)
     }, 450)
   }

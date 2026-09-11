@@ -1,5 +1,5 @@
 // ── 全域狀態：語言 / 貨幣 / 購物籃 / 後台資料（localStorage 持久化）──
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type {
   Lang, Currency, Product, SiteContent, Faq, QA, Review, Order, EmailSettings, EmailLog, CartItem,
 } from './types'
@@ -7,6 +7,13 @@ import {
   defaultProducts, defaultSite, defaultFaqs, defaultQAs, defaultReviews,
   defaultEmailSettings, HKD_TO_CNY, FREE_SHIPPING_HKD,
 } from './seed'
+import { cloudEnabled, fetchCloudDB, pushCloudDB, insertCloudOrder, fetchCloudOrders } from './cloud'
+
+// 只同步公開內容上雲；訂單/電郵設定屬敏感資料，經獨立表格同密碼 RPC 處理
+type PublicDB = Pick<DB, 'products' | 'site' | 'faqs' | 'qas' | 'reviews'>
+function publicSubset(d: DB): PublicDB {
+  return { products: d.products, site: d.site, faqs: d.faqs, qas: d.qas, reviews: d.reviews }
+}
 
 const DB_KEY = 'beadoria-db-v2'
 const CART_KEY = 'beadoria-cart-v2'
@@ -146,6 +153,7 @@ interface StoreCtx {
   deleteReview: (id: string) => void
   placeOrder: (o: Omit<Order, 'id' | 'createdAt' | 'status'>) => Order
   updateOrderStatus: (id: string, s: Order['status']) => void
+  refreshOrders: () => Promise<void>
   saveEmailSettings: (s: EmailSettings) => void
   logEmail: (e: Omit<EmailLog, 'id' | 'createdAt'>) => void
   resetDemo: () => void
@@ -169,8 +177,40 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>(loadCart)
   const [db, setDb] = useState<DB>(loadDB)
 
+  // ── 雲端同步：開店時拉取 Supabase 資料（無雲端行就將本地資料推上去做第一行）
+  const skipNextPush = useRef(false)
+  const pushTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (!cloudEnabled()) return
+    let cancelled = false
+    ;(async () => {
+      const remote = await fetchCloudDB<PublicDB>()
+      if (cancelled) return
+      if (remote) {
+        skipNextPush.current = true // 拉取落嚟嘅資料唔好即刻推返上去
+        setDb((d) => ({
+          ...d,
+          ...remote,
+          site: { ...d.site, ...(remote.site || {}) },
+        }))
+      } else {
+        pushCloudDB(publicSubset(loadDB())) // 雲端未有任何資料：用本機資料做初始化
+      }
+    })()
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   useEffect(() => {
     localStorage.setItem(DB_KEY, JSON.stringify(db))
+    if (!cloudEnabled()) return
+    if (skipNextPush.current) {
+      skipNextPush.current = false
+      return
+    }
+    if (pushTimer.current) clearTimeout(pushTimer.current)
+    pushTimer.current = setTimeout(() => { pushCloudDB(publicSubset(db)) }, 800) // 防抖：連續修改合併推送
   }, [db])
   useEffect(() => {
     localStorage.setItem(CART_KEY, JSON.stringify(cart))
@@ -215,10 +255,21 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           return item ? { ...p, stock: Math.max(0, p.stock - item.qty) } : p
         }),
       }))
+      insertCloudOrder(order) // 即時寫入雲端訂單表（防火牆式，失敗唔影響本地）
       return order
     },
     updateOrderStatus: (id, s) =>
       setDb((d) => ({ ...d, orders: d.orders.map((o) => (o.id === id ? { ...o, status: s } : o)) })),
+    refreshOrders: async () => {
+      const cloud = await fetchCloudOrders<Order>()
+      if (!cloud) return
+      // 雲端係訂單嘅唯一真相來源；本地落嘅單若未上雲就合併保留
+      setDb((d) => {
+        const cloudIds = new Set(cloud.map((o) => o.id))
+        const localOnly = d.orders.filter((o) => !cloudIds.has(o.id))
+        return { ...d, orders: [...cloud, ...localOnly] }
+      })
+    },
     saveEmailSettings: (s) => setDb((d) => ({ ...d, emailSettings: s })),
     logEmail: (e) =>
       setDb((d) => ({ ...d, emailLog: [{ ...e, id: uid('em'), createdAt: new Date().toISOString() }, ...d.emailLog].slice(0, 100) })),
