@@ -21,20 +21,20 @@ function getClient(): SupabaseClient | null {
   return client
 }
 
-/** 開店時讀取雲端資料；無資料回傳 null（呼叫方決定用本地預設） */
-export async function fetchCloudDB<T>(): Promise<T | null> {
+/** 開店時讀取雲端資料。ok+null = 雲端無資料（可初始化）；error = 連線失敗（唔好推送，避免覆蓋雲端） */
+export async function fetchCloudDB<T>(): Promise<{ status: 'ok'; data: T | null } | { status: 'error' }> {
   const sb = getClient()
-  if (!sb) return null
+  if (!sb) return { status: 'error' }
   try {
     const { data, error } = await sb.from(TABLE).select('data').eq('id', ROW_ID).maybeSingle()
     if (error) {
       console.warn('[cloud] fetch failed:', error.message)
-      return null
+      return { status: 'error' }
     }
-    return (data?.data as T) ?? null
+    return { status: 'ok', data: (data?.data as T) ?? null }
   } catch (e) {
     console.warn('[cloud] fetch error:', e)
-    return null
+    return { status: 'error' }
   }
 }
 

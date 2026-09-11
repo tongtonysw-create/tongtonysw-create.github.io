@@ -179,14 +179,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // ── 雲端同步：開店時拉取 Supabase 資料（無雲端行就將本地資料推上去做第一行）
   const skipNextPush = useRef(false)
+  const cloudReady = useRef(!cloudEnabled()) // 第一次雲端拉取完成前，禁止任何推送（防舊本地資料覆蓋雲端）
   const pushTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     if (!cloudEnabled()) return
     let cancelled = false
     ;(async () => {
-      const remote = await fetchCloudDB<PublicDB>()
-      if (cancelled) return
+      const res = await fetchCloudDB<PublicDB>()
+      if (cancelled || res.status === 'error') return // 連線失敗：維持本機模式，絕不推送（避免覆蓋雲端）
+      cloudReady.current = true // 拉取成功先開放推送
+      const remote = res.data
       if (remote) {
         skipNextPush.current = true // 拉取落嚟嘅資料唔好即刻推返上去
         setDb((d) => ({
@@ -204,12 +207,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     localStorage.setItem(DB_KEY, JSON.stringify(db))
-    if (!cloudEnabled()) return
+    if (!cloudEnabled() || !cloudReady.current) return
+    if (pushTimer.current) clearTimeout(pushTimer.current) // 任何 db 變動（包括雲端 merge）都要取消未發射嘅舊推送
     if (skipNextPush.current) {
       skipNextPush.current = false
       return
     }
-    if (pushTimer.current) clearTimeout(pushTimer.current)
     pushTimer.current = setTimeout(() => { pushCloudDB(publicSubset(db)) }, 800) // 防抖：連續修改合併推送
   }, [db])
   useEffect(() => {
