@@ -434,7 +434,7 @@ function EmailTab() {
         </h3>
         <div className="bg-[#eafaf0] border border-[#bfe6cd] rounded-xl p-3 text-xs font-body text-[#3d6b4f] leading-relaxed">
           客人一落單，你 WhatsApp 即刻收到訂單詳情（免費，經 CallMeBot 發送到店主自己嘅號碼）。
-          未填 APIKEY 前唔會發送；<b>客人確認掣</b>（落單成功頁嘅 wa.me 按鈕）填咗號碼就即用得。
+          未填 APIKEY 前唔會發送；填好儲存後可以撳「發送測試訊息」確認接通。
         </div>
         <div className="grid md:grid-cols-2 gap-3">
           <Field label="店主 WhatsApp 號碼（連區碼，唔使 +）">
