@@ -18,18 +18,18 @@ export default function Hero() {
             {db.site.heroSubtitle[lang]}
           </p>
           <div className="flex flex-wrap gap-3">
-            <a
-              href="#shop"
+            <button
+              onClick={() => document.getElementById('shop')?.scrollIntoView({ behavior: 'smooth' })}
               className="rose-gradient text-white font-body px-7 py-3 rounded-full hover:opacity-90 transition-opacity shadow-lg shadow-[#c4718b]/25"
             >
               {lang === 'zh' ? '立即選購 🌸' : 'Shop Now 🌸'}
-            </a>
-            <a
-              href="#faq"
+            </button>
+            <button
+              onClick={() => document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' })}
               className="font-body px-7 py-3 rounded-full border border-[#e8c3cf] text-[#a5566f] hover:bg-[#f7e6ea] transition-colors"
             >
               {lang === 'zh' ? '了解更多' : 'Learn More'}
-            </a>
+            </button>
           </div>
         </div>
         <div className="relative fade-in">

@@ -24,10 +24,20 @@ export default function Header({ onOpenCart }: { onOpenCart: () => void }) {
           </a>
 
           <nav className="hidden md:flex items-center gap-6 text-sm font-body">
-            <a href="#shop" className="hover:text-[#c4718b] transition-colors">{t.shop[lang]}</a>
-            <a href="#about" className="hover:text-[#c4718b] transition-colors">{t.about[lang]}</a>
-            <a href="#reviews" className="hover:text-[#c4718b] transition-colors">{t.reviews[lang]}</a>
-            <a href="#faq" className="hover:text-[#c4718b] transition-colors">{t.faq[lang]}</a>
+            {([
+              ['shop', t.shop[lang]],
+              ['about', t.about[lang]],
+              ['reviews', t.reviews[lang]],
+              ['faq', t.faq[lang]],
+            ] as const).map(([id, label]) => (
+              <button
+                key={id}
+                onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                className="hover:text-[#c4718b] transition-colors"
+              >
+                {label}
+              </button>
+            ))}
           </nav>
 
           <div className="flex items-center gap-2">

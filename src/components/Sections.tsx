@@ -87,9 +87,9 @@ export function Footer() {
         </div>
         <p className="font-body text-sm mb-6">{db.site.footerText[lang]}</p>
         <div className="flex justify-center gap-6 text-sm font-body mb-6">
-          <a href="#shop" className="hover:text-[#e8a0b4] transition-colors">{t.shop[lang]}</a>
-          <a href="#about" className="hover:text-[#e8a0b4] transition-colors">{t.about[lang]}</a>
-          <a href="#faq" className="hover:text-[#e8a0b4] transition-colors">{t.faq[lang]}</a>
+          <button onClick={() => document.getElementById('shop')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-[#e8a0b4] transition-colors">{t.shop[lang]}</button>
+          <button onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-[#e8a0b4] transition-colors">{t.about[lang]}</button>
+          <button onClick={() => document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-[#e8a0b4] transition-colors">{t.faq[lang]}</button>
           <a href="#/admin" className="hover:text-[#e8a0b4] transition-colors">{t.admin[lang]}</a>
         </div>
         <p className="font-body text-xs text-white/50">
