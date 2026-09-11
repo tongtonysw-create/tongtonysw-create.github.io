@@ -10,11 +10,12 @@ import {
 import { cloudEnabled, fetchCloudDB, pushCloudDB, insertCloudOrder, fetchCloudOrders } from './cloud'
 import { sendWhatsAppNotify, sendTelegramNotify } from './whatsapp'
 
-// 只同步公開內容上雲；訂單/電郵設定屬敏感資料，經獨立表格同密碼 RPC 處理
-// （notify 包含 WhatsApp 通知設定，要同步先至令任何裝置嘅客人都觸發到通知）
-type PublicDB = Pick<DB, 'products' | 'site' | 'faqs' | 'qas' | 'reviews' | 'notify'>
+// 只同步公開內容上雲；訂單屬敏感資料，經獨立表格同密碼 RPC 處理
+// （emailSettings 嘅 EmailJS ID/key 本身就係設計俾瀏覽器公開用；notify 係 WhatsApp/Telegram 通知設定，
+//   兩者都要同步先至令任何裝置嘅客人都觸發到通知）
+type PublicDB = Pick<DB, 'products' | 'site' | 'faqs' | 'qas' | 'reviews' | 'notify' | 'emailSettings'>
 function publicSubset(d: DB): PublicDB {
-  return { products: d.products, site: d.site, faqs: d.faqs, qas: d.qas, reviews: d.reviews, notify: d.notify }
+  return { products: d.products, site: d.site, faqs: d.faqs, qas: d.qas, reviews: d.reviews, notify: d.notify, emailSettings: d.emailSettings }
 }
 
 const DB_KEY = 'beadoria-db-v2'
