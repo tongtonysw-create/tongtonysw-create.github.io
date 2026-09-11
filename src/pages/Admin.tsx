@@ -2,12 +2,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   Lock, Package, Image as ImageIcon, Type, MessageSquareText, ClipboardList,
-  Mail, Plus, Trash2, Save, Languages, ArrowLeft, RefreshCcw, Pencil, KeyRound,
+  Mail, Plus, Trash2, Save, Languages, ArrowLeft, RefreshCcw, Pencil, KeyRound, MessageCircle,
 } from 'lucide-react'
 import { useStore, fmtPrice, t, uid } from '@/lib/store'
 import { translateZhToEn, translateEnToZh } from '@/lib/translate'
 import { sendShippingEmail } from '@/lib/email'
 import { adminLogin, changeAdminPassword, setAdminPassword, updateCloudOrderStatus } from '@/lib/cloud'
+import { sendWhatsAppTest } from '@/lib/whatsapp'
 import type { Bilingual, Order, OrderStatus, Product, QA } from '@/lib/types'
 
 // ── 通用小組件 ─────────────────────────────────────────────
@@ -421,10 +422,54 @@ function OrdersTab() {
 
 // ── 電郵設定 + 發件日誌 ─────────────────────────────────────
 function EmailTab() {
-  const { db, saveEmailSettings } = useStore()
+  const { db, saveEmailSettings, saveNotify } = useStore()
   const [s, setS] = useState(db.emailSettings)
+  const [n, setN] = useState(db.notify)
+  const [waMsg, setWaMsg] = useState('')
   return (
     <div className="max-w-2xl space-y-6">
+      <div className="soft-card rounded-2xl p-5 space-y-4">
+        <h3 className="font-display text-lg font-semibold text-[#5a4550] flex items-center gap-2">
+          <MessageCircle size={18} className="text-[#1da851]" /> WhatsApp 新訂單通知
+        </h3>
+        <div className="bg-[#eafaf0] border border-[#bfe6cd] rounded-xl p-3 text-xs font-body text-[#3d6b4f] leading-relaxed">
+          客人一落單，你 WhatsApp 即刻收到訂單詳情（免費，經 CallMeBot 發送到店主自己嘅號碼）。
+          未填 APIKEY 前唔會發送；<b>客人確認掣</b>（落單成功頁嘅 wa.me 按鈕）填咗號碼就即用得。
+        </div>
+        <div className="grid md:grid-cols-2 gap-3">
+          <Field label="店主 WhatsApp 號碼（連區碼，唔使 +）">
+            <input className={inputCls} value={n.waPhone} onChange={(e) => setN({ ...n, waPhone: e.target.value })} placeholder="85292128542" />
+          </Field>
+          <Field label="CallMeBot APIKEY">
+            <input className={inputCls} value={n.waApiKey} onChange={(e) => setN({ ...n, waApiKey: e.target.value })} placeholder="未啟動可留空" />
+          </Field>
+        </div>
+        <label className="flex items-center gap-2 text-sm font-body text-[#8a6d78]">
+          <input type="checkbox" checked={n.enabled} onChange={(e) => setN({ ...n, enabled: e.target.checked })} />
+          啟用落單自動 WhatsApp 通知（需已填 APIKEY）
+        </label>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => { saveNotify(n); setWaMsg('✅ 已儲存（即時全網生效）') }}
+            className="flex items-center gap-1.5 px-6 py-2.5 rounded-full rose-gradient text-white text-sm font-body"
+          >
+            <Save size={15} /> 儲存設定
+          </button>
+          <button
+            onClick={async () => {
+              setWaMsg('發送中…')
+              const ok = await sendWhatsAppTest(n)
+              setWaMsg(ok ? '📲 測試訊息已發出，睇下你 WhatsApp 收唔收到' : '❌ 發送失敗：請檢查號碼同 APIKEY')
+            }}
+            disabled={!n.waPhone || !n.waApiKey}
+            className="px-6 py-2.5 rounded-full border border-[#25D366]/50 text-[#1da851] text-sm font-body disabled:opacity-40 hover:bg-[#25D366]/10"
+          >
+            發送測試訊息
+          </button>
+        </div>
+        {waMsg && <p className="text-sm font-body text-[#8a6d78]">{waMsg}</p>}
+      </div>
+
       <div className="soft-card rounded-2xl p-5 space-y-4">
         <h3 className="font-display text-lg font-semibold text-[#5a4550]">電郵通知設定</h3>
         <Field label="店主通知邮箱（新訂單即時通知）">
@@ -563,7 +608,7 @@ const TABS = [
   { key: 'text', label: '網站文字', icon: Type },
   { key: 'qa', label: '客服問答 / FAQ', icon: MessageSquareText },
   { key: 'orders', label: '訂單管理', icon: ClipboardList },
-  { key: 'email', label: '電郵通知', icon: Mail },
+  { key: 'email', label: '通知設定', icon: Mail },
   { key: 'settings', label: '密碼設定', icon: KeyRound },
 ] as const
 

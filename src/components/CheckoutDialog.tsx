@@ -1,9 +1,10 @@
 // ── 結帳彈窗：填資料 → 下單 → 自動寄確認信 + 店主通知 ────────────
 import { useState } from 'react'
-import { X, CheckCircle2, CreditCard, Smartphone, Wallet } from 'lucide-react'
+import { X, CheckCircle2, CreditCard, Smartphone, Wallet, MessageCircle } from 'lucide-react'
 import { useStore, t, fmtPrice } from '@/lib/store'
 import { useCartTotals } from './CartDrawer'
 import { sendOrderEmails } from '@/lib/email'
+import { waMeOrderLink } from '@/lib/whatsapp'
 import type { Order } from '@/lib/types'
 
 const PAYMENTS: { id: string | ((l: 'zh' | 'en') => string); icon: typeof CreditCard }[] = [
@@ -92,6 +93,17 @@ export default function CheckoutDialog({ open, onClose }: { open: boolean; onClo
             <button onClick={onClose} className="rose-gradient text-white font-body px-8 py-3 rounded-full hover:opacity-90 transition-opacity">
               {lang === 'zh' ? '繼續購物 🌸' : 'Continue Shopping 🌸'}
             </button>
+            {db.notify.waPhone && (
+              <a
+                href={waMeOrderLink(db.notify, done)}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-3 inline-flex items-center gap-2 font-body px-8 py-3 rounded-full border border-[#25D366]/50 text-[#1da851] hover:bg-[#25D366]/10 transition-colors"
+              >
+                <MessageCircle size={16} />
+                {lang === 'zh' ? 'WhatsApp 傳送訂單俾店主' : 'Send Order via WhatsApp'}
+              </a>
+            )}
           </div>
         ) : (
           <div className="px-6 py-6 space-y-4">

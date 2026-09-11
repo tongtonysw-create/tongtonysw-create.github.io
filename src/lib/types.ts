@@ -91,6 +91,12 @@ export interface EmailSettings {
   enabled: boolean // 是否真實發送（未設定則記錄到發件日誌）
 }
 
+export interface NotifySettings {
+  waPhone: string    // 店主 WhatsApp（連區碼，唔使 +，例：85292128542）
+  waApiKey: string   // CallMeBot APIKEY（啟動後由機械人發送）
+  enabled: boolean   // 落單時自動 WhatsApp 通知店主
+}
+
 export interface EmailLog {
   id: string
   to: string

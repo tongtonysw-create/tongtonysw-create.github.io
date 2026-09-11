@@ -1,18 +1,20 @@
 // ── 全域狀態：語言 / 貨幣 / 購物籃 / 後台資料（localStorage 持久化）──
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type {
-  Lang, Currency, Product, SiteContent, Faq, QA, Review, Order, EmailSettings, EmailLog, CartItem,
+  Lang, Currency, Product, SiteContent, Faq, QA, Review, Order, EmailSettings, EmailLog, CartItem, NotifySettings,
 } from './types'
 import {
   defaultProducts, defaultSite, defaultFaqs, defaultQAs, defaultReviews,
-  defaultEmailSettings, HKD_TO_CNY, FREE_SHIPPING_HKD,
+  defaultEmailSettings, defaultNotify, HKD_TO_CNY, FREE_SHIPPING_HKD,
 } from './seed'
 import { cloudEnabled, fetchCloudDB, pushCloudDB, insertCloudOrder, fetchCloudOrders } from './cloud'
+import { sendWhatsAppNotify } from './whatsapp'
 
 // 只同步公開內容上雲；訂單/電郵設定屬敏感資料，經獨立表格同密碼 RPC 處理
-type PublicDB = Pick<DB, 'products' | 'site' | 'faqs' | 'qas' | 'reviews'>
+// （notify 包含 WhatsApp 通知設定，要同步先至令任何裝置嘅客人都觸發到通知）
+type PublicDB = Pick<DB, 'products' | 'site' | 'faqs' | 'qas' | 'reviews' | 'notify'>
 function publicSubset(d: DB): PublicDB {
-  return { products: d.products, site: d.site, faqs: d.faqs, qas: d.qas, reviews: d.reviews }
+  return { products: d.products, site: d.site, faqs: d.faqs, qas: d.qas, reviews: d.reviews, notify: d.notify }
 }
 
 const DB_KEY = 'beadoria-db-v2'
@@ -27,6 +29,7 @@ interface DB {
   orders: Order[]
   emailSettings: EmailSettings
   emailLog: EmailLog[]
+  notify: NotifySettings
 }
 
 function loadDB(): DB {
@@ -51,6 +54,7 @@ function defaultDB(): DB {
     orders: [],
     emailSettings: defaultEmailSettings,
     emailLog: [],
+    notify: defaultNotify,
   }
 }
 
@@ -155,6 +159,7 @@ interface StoreCtx {
   updateOrderStatus: (id: string, s: Order['status']) => void
   refreshOrders: () => Promise<void>
   saveEmailSettings: (s: EmailSettings) => void
+  saveNotify: (n: NotifySettings) => void
   logEmail: (e: Omit<EmailLog, 'id' | 'createdAt'>) => void
   resetDemo: () => void
 }
@@ -259,6 +264,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         }),
       }))
       insertCloudOrder(order) // 即時寫入雲端訂單表（防火牆式，失敗唔影響本地）
+      sendWhatsAppNotify(db.notify, order) // WhatsApp 即時通知店主（未設 APIKEY 就靜靜略過）
       return order
     },
     updateOrderStatus: (id, s) =>
@@ -274,6 +280,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       })
     },
     saveEmailSettings: (s) => setDb((d) => ({ ...d, emailSettings: s })),
+    saveNotify: (n) => setDb((d) => ({ ...d, notify: n })),
     logEmail: (e) =>
       setDb((d) => ({ ...d, emailLog: [{ ...e, id: uid('em'), createdAt: new Date().toISOString() }, ...d.emailLog].slice(0, 100) })),
     resetDemo: () => {

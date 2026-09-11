@@ -1,5 +1,5 @@
 // ── 預設資料（首次載入時種入，之後以 localStorage 為準）─────────
-import type { Product, SiteContent, Faq, QA, Review, EmailSettings } from './types'
+import type { Product, SiteContent, Faq, QA, Review, EmailSettings, NotifySettings } from './types'
 import { beadArt, pastelScene } from './images'
 
 export const FREE_SHIPPING_HKD = 300
@@ -255,4 +255,10 @@ export const defaultEmailSettings: EmailSettings = {
   emailjsTemplateId: '',
   emailjsPublicKey: '',
   enabled: false,
+}
+
+export const defaultNotify: NotifySettings = {
+  waPhone: '85292128542',
+  waApiKey: '',
+  enabled: true,
 }
