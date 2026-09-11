@@ -2,12 +2,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   Lock, Package, Image as ImageIcon, Type, MessageSquareText, ClipboardList,
-  Mail, Plus, Trash2, Save, Languages, ArrowLeft, RefreshCcw, Pencil,
+  Mail, Plus, Trash2, Save, Languages, ArrowLeft, RefreshCcw, Pencil, KeyRound,
 } from 'lucide-react'
 import { useStore, fmtPrice, t, uid } from '@/lib/store'
 import { translateZhToEn, translateEnToZh } from '@/lib/translate'
 import { sendShippingEmail } from '@/lib/email'
-import { setAdminPassword, updateCloudOrderStatus } from '@/lib/cloud'
+import { adminLogin, changeAdminPassword, setAdminPassword, updateCloudOrderStatus } from '@/lib/cloud'
 import type { Bilingual, Order, OrderStatus, Product, QA } from '@/lib/types'
 
 // ── 通用小組件 ─────────────────────────────────────────────
@@ -488,6 +488,74 @@ function EmailTab() {
   )
 }
 
+// ── 密碼設定：更改後台管理密碼（存喺 Supabase 私人密碼表，代碼入面唔會再有密碼）──
+function SettingsTab() {
+  const [oldPwd, setOldPwd] = useState('')
+  const [newPwd, setNewPwd] = useState('')
+  const [confirmPwd, setConfirmPwd] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
+
+  const submit = async () => {
+    setMsg(null)
+    if (newPwd.length < 8) {
+      setMsg({ ok: false, text: '新密碼最少 8 個字符' })
+      return
+    }
+    if (newPwd !== confirmPwd) {
+      setMsg({ ok: false, text: '兩次輸入嘅新密碼唔一致' })
+      return
+    }
+    setBusy(true)
+    const r = await changeAdminPassword(oldPwd, newPwd)
+    setBusy(false)
+    if (r === 'ok') {
+      sessionStorage.setItem('beadoria-admin-pw', newPwd)
+      setAdminPassword(newPwd)
+      setOldPwd(''); setNewPwd(''); setConfirmPwd('')
+      setMsg({ ok: true, text: '✅ 密碼已更改，即刻生效（所有裝置嘅後台都用新密碼）' })
+    } else if (r === 'wrong') {
+      setMsg({ ok: false, text: '現時密碼唔正確' })
+    } else {
+      setMsg({ ok: false, text: '雲端密碼功能未開通：請先喺 Supabase SQL Editor 跑返 v2 升級腳本' })
+    }
+  }
+
+  return (
+    <div className="max-w-md">
+      <div className="soft-card rounded-3xl p-6">
+        <h2 className="font-display text-xl font-bold text-[#5a4550] mb-1 flex items-center gap-2">
+          <KeyRound size={18} className="text-[#a5566f]" /> 更改管理密碼
+        </h2>
+        <p className="font-body text-xs text-[#b39aa5] mb-5">
+          密碼存喺 Supabase 私人密碼表，唔會再出現喺網站代碼度。更改後即時全網生效。
+        </p>
+        <div className="space-y-4">
+          <Field label="現時密碼">
+            <input type="password" className={inputCls} value={oldPwd} onChange={(e) => setOldPwd(e.target.value)} />
+          </Field>
+          <Field label="新密碼（最少 8 個字符）">
+            <input type="password" className={inputCls} value={newPwd} onChange={(e) => setNewPwd(e.target.value)} />
+          </Field>
+          <Field label="再輸入一次新密碼">
+            <input type="password" className={inputCls} value={confirmPwd} onChange={(e) => setConfirmPwd(e.target.value)} />
+          </Field>
+          {msg && (
+            <p className={`font-body text-sm ${msg.ok ? 'text-green-700' : 'text-[#c05f5f]'}`}>{msg.text}</p>
+          )}
+          <button
+            onClick={submit}
+            disabled={busy || !oldPwd || !newPwd}
+            className="w-full rose-gradient text-white font-body py-2.5 rounded-full disabled:opacity-60"
+          >
+            {busy ? '處理中…' : '更改密碼'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── 後台主頁 ───────────────────────────────────────────────
 const TABS = [
   { key: 'products', label: '產品管理', icon: Package },
@@ -496,12 +564,14 @@ const TABS = [
   { key: 'qa', label: '客服問答 / FAQ', icon: MessageSquareText },
   { key: 'orders', label: '訂單管理', icon: ClipboardList },
   { key: 'email', label: '電郵通知', icon: Mail },
+  { key: 'settings', label: '密碼設定', icon: KeyRound },
 ] as const
 
 export default function Admin() {
   const { db, resetDemo, refreshOrders } = useStore()
   const [authed, setAuthed] = useState(() => sessionStorage.getItem('beadoria-admin') === '1')
   const [pw, setPw] = useState('')
+  const [loginBusy, setLoginBusy] = useState(false)
   const [tab, setTab] = useState<(typeof TABS)[number]['key']>('products')
   const pendingCount = useMemo(() => db.orders.filter((o) => o.status === 'pending' || o.status === 'paid').length, [db.orders])
 
@@ -514,14 +584,18 @@ export default function Admin() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authed])
 
-  const doLogin = () => {
-    if (pw === 'admin123') {
+  const doLogin = async () => {
+    if (loginBusy) return
+    setLoginBusy(true)
+    const ok = await adminLogin(pw)
+    setLoginBusy(false)
+    if (ok) {
       sessionStorage.setItem('beadoria-admin', '1')
       sessionStorage.setItem('beadoria-admin-pw', pw)
       setAdminPassword(pw)
       setAuthed(true)
     } else {
-      alert('密碼錯誤（示範密碼：admin123）')
+      alert('密碼錯誤')
     }
   }
 
@@ -533,7 +607,7 @@ export default function Admin() {
             <Lock size={22} />
           </span>
           <h1 className="font-display text-2xl font-bold text-[#5a4550] mb-1">Beadoria 後台</h1>
-          <p className="font-body text-sm text-[#b39aa5] mb-6">示範密碼：admin123</p>
+          <p className="font-body text-sm text-[#b39aa5] mb-6">請輸入管理密碼</p>
           <input
             type="password"
             className={inputCls + ' text-center mb-3'}
@@ -546,9 +620,10 @@ export default function Admin() {
           />
           <button
             onClick={doLogin}
-            className="w-full rose-gradient text-white font-body py-2.5 rounded-full"
+            disabled={loginBusy}
+            className="w-full rose-gradient text-white font-body py-2.5 rounded-full disabled:opacity-60"
           >
-            登入
+            {loginBusy ? '驗證中…' : '登入'}
           </button>
           <a href="#/" className="inline-flex items-center gap-1 text-xs font-body text-[#a5566f] mt-4 hover:underline">
             <ArrowLeft size={12} /> 返回商店
@@ -604,6 +679,7 @@ export default function Admin() {
         {tab === 'qa' && <QaTab />}
         {tab === 'orders' && <OrdersTab />}
         {tab === 'email' && <EmailTab />}
+        {tab === 'settings' && <SettingsTab />}
       </div>
     </div>
   )

@@ -59,10 +59,40 @@ export async function pushCloudDB(db: unknown): Promise<boolean> {
 
 // ── 訂單（含客人個人資料）：客人可落單；讀取/更新必須經密碼保護嘅 RPC ──
 const ORDERS_TABLE = 'beadoria_orders'
+const LEGACY_ADMIN_PASSWORD = 'admin123' // 未跑 v2 SQL 前嘅過渡密碼；跑咗 v2 後由雲端密碼表接管
 let adminPwd = ''
 
 export function setAdminPassword(pwd: string) {
   adminPwd = pwd
+}
+
+/** 後台登入：優先用雲端密碼表（v2 RPC）；RPC 未安裝時退回過渡密碼 */
+export async function adminLogin(pwd: string): Promise<boolean> {
+  const sb = getClient()
+  if (!sb) return pwd === LEGACY_ADMIN_PASSWORD
+  try {
+    const { data, error } = await sb.rpc('admin_check_password', { pwd })
+    if (error) return pwd === LEGACY_ADMIN_PASSWORD // RPC 未裝：過渡模式
+    return data === true
+  } catch {
+    return pwd === LEGACY_ADMIN_PASSWORD
+  }
+}
+
+/** 後台改密碼（需要已跑 v2 SQL）；回傳 ok / wrong（舊密碼錯）/ unavailable（未升級雲端） */
+export async function changeAdminPassword(oldPwd: string, newPwd: string): Promise<'ok' | 'wrong' | 'unavailable'> {
+  const sb = getClient()
+  if (!sb) return 'unavailable'
+  try {
+    const { data, error } = await sb.rpc('admin_change_password', { old_pwd: oldPwd, new_pwd: newPwd })
+    if (error) {
+      console.warn('[cloud] change password failed:', error.message)
+      return 'unavailable'
+    }
+    return data === true ? 'ok' : 'wrong'
+  } catch {
+    return 'unavailable'
+  }
 }
 
 /** 客人落單：即時寫入雲端訂單表 */
