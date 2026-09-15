@@ -1,5 +1,5 @@
 // ── 頂部導航：語言切換 / 貨幣切換 / 購物籃按鈕 ──────────────────
-import { ShoppingBag, Sparkles, Globe, Coins } from 'lucide-react'
+import { ShoppingBag, Globe, Coins } from 'lucide-react'
 import { useStore, t } from '@/lib/store'
 
 export default function Header({ onOpenCart }: { onOpenCart: () => void }) {
@@ -15,9 +15,11 @@ export default function Header({ onOpenCart }: { onOpenCart: () => void }) {
       <header className="sticky top-0 z-40 bg-[#fdf8f4]/90 backdrop-blur border-b border-[#f3dde3]">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <a href="#/" className="flex items-center gap-2 min-w-0">
-            <span className="w-9 h-9 rounded-full rose-gradient flex items-center justify-center text-white shrink-0">
-              <Sparkles size={18} />
-            </span>
+            <img
+              src="/logo.png"
+              alt="Beadoria logo"
+              className="w-10 h-10 rounded-full object-cover object-top border border-[#f3dde3] shadow-sm shrink-0"
+            />
             <span className="font-display text-xl font-semibold text-[#a5566f] truncate">
               {db.site.shopName[lang]}
             </span>
