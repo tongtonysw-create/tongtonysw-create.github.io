@@ -18,7 +18,7 @@ export default function Header({ onOpenCart }: { onOpenCart: () => void }) {
             <img
               src="/logo.png"
               alt="Beadoria logo"
-              className="w-10 h-10 rounded-full object-cover object-top border border-[#f3dde3] shadow-sm shrink-0"
+              className="w-14 h-14 rounded-full object-cover border-2 border-[#f3dde3] shadow-sm shrink-0 bg-white"
             />
             <span className="font-display text-xl font-semibold text-[#a5566f] truncate">
               {db.site.shopName[lang]}
