@@ -50,7 +50,7 @@ function orderLines(o: Order, lang: Lang): string {
 /** 下單後：客人確認信 + 店主新訂單通知 */
 export async function sendOrderEmails(settings: EmailSettings, log: LogFn, o: Order) {
   const zhBody =
-    `親愛的 ${o.customer.name}：\n\n多謝你嘅訂單！以下係訂單詳情：\n\n訂單編號：${o.id}\n${orderLines(o, 'zh')}\n\n小計：${fmtPrice(o.subtotalHKD, o.currency)}\n運費：${o.shippingHKD === 0 ? '免費' : fmtPrice(o.shippingHKD, o.currency)}\n合計：${fmtPrice(o.totalHKD, o.currency)}\n付款方式：${o.payment}\n送貨地址：${o.customer.address}\n\n我哋會盡快為你準備，發貨時會再電郵通知你。\n\nBeadoria 拼豆物語 🌸`
+    `親愛的 ${o.customer.name}：\n\n多謝你嘅訂單！以下係訂單詳情：\n\n訂單編號：${o.id}\n${orderLines(o, 'zh')}\n\n小計：${fmtPrice(o.subtotalHKD, o.currency)}\n運費：${o.shippingHKD === 0 ? '免費' : fmtPrice(o.shippingHKD, o.currency)}\n合計：${fmtPrice(o.totalHKD, o.currency)}\n付款方式：${o.payment}\n送貨地址：${o.customer.address}\n\n我哋會盡快為你準備，發貨時會再電郵通知你。\n\nBeadoria 拼豆工坊 🌸`
   await dispatch(settings, log, 'order_confirmation', o.customer.email, `[Beadoria] 訂單確認 Order Confirmation ${o.id}`, zhBody)
 
   const adminBody =
@@ -61,6 +61,6 @@ export async function sendOrderEmails(settings: EmailSettings, log: LogFn, o: Or
 /** 發貨時：客人發貨通知 */
 export async function sendShippingEmail(settings: EmailSettings, log: LogFn, o: Order) {
   const body =
-    `親愛的 ${o.customer.name}：\n\n好消息！你嘅訂單 ${o.id} 已經發貨 📦\n\n${orderLines(o, 'zh')}\n\n香港訂單一般 2-4 個工作天送到，請留意順豐通知。\n多謝支持 Beadoria 拼豆物語 🌸`
+    `親愛的 ${o.customer.name}：\n\n好消息！你嘅訂單 ${o.id} 已經發貨 📦\n\n${orderLines(o, 'zh')}\n\n香港訂單一般 2-4 個工作天送到，請留意順豐通知。\n多謝支持 Beadoria 拼豆工坊 🌸`
   await dispatch(settings, log, 'shipping', o.customer.email, `[Beadoria] 訂單已發貨 Order Shipped ${o.id}`, body)
 }

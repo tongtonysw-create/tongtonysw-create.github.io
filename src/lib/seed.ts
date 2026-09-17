@@ -114,7 +114,7 @@ export const defaultProducts: Product[] = [
 ]
 
 export const defaultSite: SiteContent = {
-  shopName: { zh: 'Beadoria 拼豆物語', en: 'Beadoria Bead Stories' },
+  shopName: { zh: 'Beadoria 拼豆工坊', en: 'Beadoria Bead Stories' },
   heroTitle: { zh: '一粒一粒，拼出屬於你嘅浪漫', en: 'Bead by bead, craft your own romance' },
   heroSubtitle: {
     zh: '香港本土拼豆小店 · 精選柔和色系拼豆、專業工具，同埋一對一個人化圖紙設計，將你嘅回憶變成可以觸摸嘅作品。',
@@ -130,7 +130,7 @@ export const defaultSite: SiteContent = {
   },
   aboutImage: pastelScene('lilac', 9),
   bannerImage: pastelScene('sage', 14),
-  footerText: { zh: '© 2026 Beadoria 拼豆物語 · 香港手作小店 · 用心拼好每一粒', en: '© 2026 Beadoria Bead Stories · Handmade in Hong Kong · Every bead with love' },
+  footerText: { zh: '© 2026 Beadoria 拼豆工坊 · 香港手作小店 · 用心拼好每一粒', en: '© 2026 Beadoria Bead Stories · Handmade in Hong Kong · Every bead with love' },
 }
 
 export const defaultFaqs: Faq[] = [
