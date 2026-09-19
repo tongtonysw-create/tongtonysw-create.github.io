@@ -87,6 +87,29 @@ export default function CheckoutDialog({ open, onClose }: { open: boolean; onClo
                 <span className="text-[#a5566f]">{fmtPrice(done.totalHKD, currency)}</span>
               </div>
             </div>
+            {/* 付款 QR Code：按客人揀嘅方式顯示 */}
+            {(() => {
+              const qr = done.payment.includes('PayMe') ? db.site.paymentQrPayme : db.site.paymentQrFps
+              return (
+                <div className="soft-card rounded-2xl p-4 mb-6 text-center">
+                  <p className="font-body text-sm font-semibold text-[#5a4550] mb-1">
+                    {lang === 'zh' ? `付款方式：${done.payment}` : `Payment: ${done.payment}`}
+                  </p>
+                  <p className="font-body text-xs text-[#8a6d78] mb-3">
+                    {lang === 'zh'
+                      ? `請用${done.payment}支付 ${fmtPrice(done.totalHKD, currency)}，完成後 WhatsApp 或電郵通知我哋 🌸`
+                      : `Please pay ${fmtPrice(done.totalHKD, currency)} via ${done.payment}, then let us know on WhatsApp or by email 🌸`}
+                  </p>
+                  {qr ? (
+                    <img src={qr} alt={done.payment} className="w-48 h-48 object-contain mx-auto rounded-xl border border-[#f3dde3] bg-white p-2" />
+                  ) : (
+                    <p className="font-body text-xs text-[#b39aa5]">
+                      {lang === 'zh' ? '（收款 QR Code 即將上架，請先留意確認電郵嘅付款指示）' : '(Payment QR coming soon — please check the confirmation email for instructions)'}
+                    </p>
+                  )}
+                </div>
+              )
+            })()}
             <button onClick={onClose} className="rose-gradient text-white font-body px-8 py-3 rounded-full hover:opacity-90 transition-opacity">
               {lang === 'zh' ? '繼續購物 🌸' : 'Continue Shopping 🌸'}
             </button>

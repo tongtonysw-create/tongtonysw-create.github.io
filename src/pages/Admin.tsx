@@ -210,6 +210,8 @@ function SiteImagesTab() {
       </Field>
       <ImageField label="關於我哋圖片" value={site.aboutImage} onChange={(v) => setSite({ ...site, aboutImage: v })} />
       <ImageField label="頁尾裝飾 Banner" value={site.bannerImage} onChange={(v) => setSite({ ...site, bannerImage: v })} />
+      <ImageField label="FPS 轉數快收款 QR Code（落單確認頁顯示）" value={site.paymentQrFps || ''} onChange={(v) => setSite({ ...site, paymentQrFps: v })} />
+      <ImageField label="PayMe 收款 QR Code（落單確認頁顯示）" value={site.paymentQrPayme || ''} onChange={(v) => setSite({ ...site, paymentQrPayme: v })} />
       <button onClick={() => saveSite(site)} className="flex items-center gap-1.5 px-6 py-2.5 rounded-full rose-gradient text-white text-sm font-body">
         <Save size={15} /> 儲存全部圖片 / 影片
       </button>

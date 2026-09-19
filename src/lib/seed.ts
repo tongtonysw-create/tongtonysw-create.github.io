@@ -131,6 +131,8 @@ export const defaultSite: SiteContent = {
   aboutImage: pastelScene('lilac', 9),
   bannerImage: pastelScene('sage', 14),
   footerText: { zh: '© 2026 Beadoria 拼豆工坊 · 香港手作小店 · 用心拼好每一粒', en: '© 2026 Beadoria Bead Stories · Handmade in Hong Kong · Every bead with love' },
+  paymentQrFps: '',
+  paymentQrPayme: '',
 }
 
 export const defaultFaqs: Faq[] = [

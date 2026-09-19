@@ -32,6 +32,8 @@ export interface SiteContent {
   bannerImage: string
   shopName: Bilingual
   footerText: Bilingual
+  paymentQrFps?: string // FPS 轉數快收款 QR Code 圖（留空即唔顯示）
+  paymentQrPayme?: string // PayMe 收款 QR Code 圖（留空即唔顯示）
 }
 
 export interface Faq {
