@@ -191,8 +191,8 @@ export const defaultQAs: QA[] = [
     id: 'q3',
     question: { zh: '接受什麼付款方式？', en: 'What payment methods do you accept?' },
     answer: {
-      zh: '我哋接受 FPS 轉數快、PayMe、AlipayHK、WeChat Pay 同信用卡。落單後會收到付款指示電郵。',
-      en: 'We accept FPS, PayMe, AlipayHK, WeChat Pay and credit cards. Payment instructions are emailed after checkout.',
+      zh: '我哋接受 FPS 轉數快同 PayMe。落單後會收到付款指示電郵。',
+      en: 'We accept FPS and PayMe. Payment instructions are emailed after checkout.',
     },
     keywords: ['付款', '支付', 'payment', 'fps', 'payme', 'alipay', '信用卡', 'wechat'],
   },

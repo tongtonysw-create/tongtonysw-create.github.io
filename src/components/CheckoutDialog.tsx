@@ -1,16 +1,14 @@
 // ── 結帳彈窗：填資料 → 下單 → 自動寄確認信 + 店主通知 ────────────
 import { useState } from 'react'
-import { X, CheckCircle2, CreditCard, Smartphone, Wallet } from 'lucide-react'
+import { X, CheckCircle2, Smartphone, Wallet } from 'lucide-react'
 import { useStore, t, fmtPrice } from '@/lib/store'
 import { useCartTotals } from './CartDrawer'
 import { sendOrderEmails } from '@/lib/email'
 import type { Order } from '@/lib/types'
 
-const PAYMENTS: { id: string | ((l: 'zh' | 'en') => string); icon: typeof CreditCard }[] = [
+const PAYMENTS: { id: string; icon: typeof Smartphone }[] = [
   { id: 'FPS 轉數快', icon: Smartphone },
   { id: 'PayMe', icon: Wallet },
-  { id: 'AlipayHK / WeChat Pay', icon: Smartphone },
-  { id: (l) => (l === 'zh' ? '信用卡 Credit Card' : 'Credit Card'), icon: CreditCard },
 ]
 
 export default function CheckoutDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -107,7 +105,7 @@ export default function CheckoutDialog({ open, onClose }: { open: boolean; onClo
               <p className="font-body text-sm text-[#8a6d78] mb-2">{t.coPayment[lang]}</p>
               <div className="grid grid-cols-2 gap-2">
                 {PAYMENTS.map((p) => {
-                  const label = typeof p.id === 'function' ? p.id(lang) : p.id
+                  const label = p.id
                   const Icon = p.icon
                   return (
                     <button

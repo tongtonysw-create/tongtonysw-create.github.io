@@ -93,7 +93,7 @@ export function Footer() {
           <a href="#/admin" className="hover:text-[#e8a0b4] transition-colors">{t.admin[lang]}</a>
         </div>
         <p className="font-body text-xs text-white/50">
-          {lang === 'zh' ? 'FPS · PayMe · AlipayHK · WeChat Pay · 信用卡' : 'FPS · PayMe · AlipayHK · WeChat Pay · Cards'}
+          {lang === 'zh' ? 'FPS 轉數快 · PayMe' : 'FPS · PayMe'}
         </p>
       </div>
     </footer>
